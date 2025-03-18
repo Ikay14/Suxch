@@ -14,6 +14,140 @@
           "App"
         ]
       }
+    },
+    "/api/v1/auth/register": {
+      "post": {
+        "operationId": "AuthController_registerUser",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RegisterUserDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Authentication"
+        ]
+      }
+    },
+    "/api/v1/auth/login": {
+      "post": {
+        "operationId": "AuthController_login",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LoginDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Authentication"
+        ]
+      }
+    },
+    "/api/v1/auth/request_password": {
+      "post": {
+        "operationId": "AuthController_requestPasswordChange",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RequestChangePasswordDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Authentication"
+        ]
+      }
+    },
+    "/api/v1/auth/changepassword": {
+      "post": {
+        "operationId": "AuthController_changePassword",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ForgetPasswordDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Authentication"
+        ]
+      }
+    },
+    "/api/v1/auth/verify": {
+      "patch": {
+        "operationId": "AuthController_verifyOtp",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "string"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Authentication"
+        ]
+      }
+    },
+    "/api/v1/auth/logout": {
+      "post": {
+        "operationId": "AuthController_logout",
+        "parameters": [],
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Authentication"
+        ]
+      }
     }
   },
   "info": {
@@ -32,6 +166,45 @@
         "type": "http"
       }
     },
-    "schemas": {}
+    "schemas": {
+      "RegisterUserDto": {
+        "type": "object",
+        "properties": {}
+      },
+      "LoginDto": {
+        "type": "object",
+        "properties": {}
+      },
+      "RequestChangePasswordDto": {
+        "type": "object",
+        "properties": {}
+      },
+      "ForgetPasswordDto": {
+        "type": "object",
+        "properties": {
+          "otp": {
+            "type": "string",
+            "description": "The reset token sent to the user’s email for password reset",
+            "example": "12345abcde"
+          },
+          "newPassword": {
+            "type": "string",
+            "description": "The new password for the user account",
+            "example": "NewPassword123!",
+            "minLength": 8
+          },
+          "confirmPassword": {
+            "type": "string",
+            "description": "Confirmation of the new password to ensure they match",
+            "example": "NewPassword123!"
+          }
+        },
+        "required": [
+          "otp",
+          "newPassword",
+          "confirmPassword"
+        ]
+      }
+    }
   }
 }

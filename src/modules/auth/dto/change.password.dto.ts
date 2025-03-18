@@ -26,7 +26,7 @@ export class ForgetPasswordDto {
       minNumbers: 1,
       minSymbols: 1,
     },
-    {
+    { 
       message:
         'Password must contain at least one uppercase letter, one lowercase letter, one number, and one special character.',
     },
@@ -40,7 +40,7 @@ export class ForgetPasswordDto {
   })
   @IsNotEmpty()
   @Match('newPassword', { message: 'Passwords do not match' })
-  confirmNewPassword: string;
+  confirmPassword: string;
 
   @IsEmail()
   email:string

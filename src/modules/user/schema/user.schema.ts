@@ -17,6 +17,9 @@ export class User extends Document {
     avatar: string
 
     @Prop()
+    profileUrl: string
+
+    @Prop()
     bio:string
 
     @Prop()
@@ -64,8 +67,8 @@ export class User extends Document {
     notificationSettings: Record<string, any>;
 
     @Prop()
-    @Prop({ default: null }) // Nullable field for soft delete tracking
-    deletedAt?: Date;
+    @Prop({ default: false }) // Nullable field for soft delete tracking
+    isDeleted?: boolean;
 
     
 }

@@ -8,6 +8,7 @@ import { ValidationPipe } from '@nestjs/common';
 import { IoAdapter } from '@nestjs/platform-socket.io';
 import * as fs from 'fs'; 
 import * as cors from 'cors';
+import * as cookieParser from 'cookie-parser';
 import { initializeDatabase } from './db/data.source';
 import { ConfigService } from '@nestjs/config';
 
@@ -43,10 +44,12 @@ async function bootstrap() {
   const document = SwaggerModule.createDocument(app, config);
   SwaggerModule.setup('api/docs', app, document);
 
-  // fs.writeFileSync('./swagger.json', JSON.stringify(document, null, 2));
+  fs.writeFileSync('./swagger.json', JSON.stringify(document, null, 2));
    
   // // Add WebSocket adapter
   // app.useWebSocketAdapter(new IoAdapter(app));
+
+  app.use(cookieParser());
   
   
   app.enableCors({

@@ -1,4 +1,4 @@
-import { Body, Controller, Post, Res } from '@nestjs/common';
+import { Body, Controller, Patch, Post, Res } from '@nestjs/common';
 import { Response } from 'express';
 import { AuthService } from './auth.service';
 import { RegisterUserDto } from './dto/register.dto';
@@ -25,7 +25,7 @@ export class AuthController {
     @Post('login')
     async login(
         @Body() loginDto:LoginDto,
-        @Res() res: Response
+        @Res({ passthrough: true }) res: Response
     ){
         return this.authService.login(loginDto, res)
     }
@@ -37,10 +37,22 @@ export class AuthController {
         return this.authService.requestChangePassword(requestPassword)
     }
 
-    @Post('change_password')
-    async changePassword(
-        @Body() changePasswordDto: ForgetPasswordDto
-    ){
-        return this.authService.changePassword(changePasswordDto)
+
+    @Post('changepassword')
+    async changePassword( 
+        @Body() changePasswordDto: ForgetPasswordDto) {
+      return this.authService.changePassword( changePasswordDto);
+    }
+  
+    @Patch('verify')
+    async verifyOtp(
+        @Body() email: string, otp: string,) {
+        return this.authService.verifyOtp(email,otp);
+    } 
+
+    @Post('logout')
+    async logout(@Res({ passthrough: true }) res: Response){
+        res.clearCookie('accessToken')
+        return  { message: 'Logged out successfully' };
     }
 }

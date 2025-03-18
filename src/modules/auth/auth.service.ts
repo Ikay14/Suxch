@@ -1,4 +1,4 @@
-import { Injectable, Inject, BadRequestException, UnauthorizedException, NotFoundException, Response } from '@nestjs/common';
+import { Injectable, Inject, BadRequestException, UnauthorizedException, NotFoundException } from '@nestjs/common';
 import { Response as ExpressResponse } from 'express';
 import { User } from '../user/schema/user.schema';
 import { InjectModel } from '@nestjs/mongoose'; 
@@ -7,6 +7,7 @@ import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 import { RegisterUserDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
+import { Response } from 'express';
 import * as bcrypt from 'bcrypt'
 import { MailService } from 'src/services/email';
 import { generateResponsePayload } from 'src/helpers/generate.payload';
@@ -64,21 +65,21 @@ export class AuthService {
         }
     }
 
-     async login(loginDto: LoginDto, res: ExpressResponse):Promise<any>{
+     async login(loginDto: LoginDto, res: Response):Promise<any>{
         const {email, password } = loginDto
 
         const user = await this.userModel.findOne({ email })
         if(!user) throw new NotFoundException('User not Found')
 
-        const isMatch = await bcrypt.compare(loginDto.password, password)
+        const isMatch = await bcrypt.compare(password, user.password)
         if(!isMatch) throw new BadRequestException('User entered credentials invalid')
 
         const accessToken = this.generateAccessToken(user)
         const responsePayload = generateResponsePayload(user) 
 
-        const isDevelopment = process.env.NODE_ENV === 'development';
+        const isDevelopment = process.env.NODE_ENV === 'production';
 
-        res.cookie('accessToken', accessToken, {
+        await res.cookie('accessToken', accessToken, {
             httpOnly: true,       
             secure: !isDevelopment,         
             sameSite: 'strict',  
@@ -90,7 +91,7 @@ export class AuthService {
             responsePayload,
             accessToken
         }
-    }
+    } 
 
    async requestChangePassword(requestChangePasswordDto:RequestChangePasswordDto ){
     const { email } = requestChangePasswordDto
@@ -114,7 +115,11 @@ export class AuthService {
         'Password Reset Request',
         'password.reset',
         { name: user.fullname, email: user.email, verificationOtp }
-    )    
+    )  
+    
+    return {
+        msg: "password reset"
+    }
    }
 
    async changePassword(changePasswordDto: ForgetPasswordDto) {
@@ -140,30 +145,34 @@ export class AuthService {
     await user.save();
 
     // Send confirmation email
-    await this.sendEmail(email, 'Password Changed Successfully', 'change.password', { name: user.fullname });
+    await this.sendEmail(email, 'Password Changed Successfully', 'change.password', { name: user.fullname, email: email });
 
     return { message: 'Password changed successfully' };
 }
 
 async verifyOtp(email: string, otp: string) {
+    if (typeof email !== 'string' || typeof otp !== 'string') {
+        throw new BadRequestException('Invalid input');
+    }
+
     const user = await this.userModel.findOne({ email });
     if (!user) throw new NotFoundException('User not found');
 
-    if (!user.otpExpires || new Date() > user.otpExpires) {
-        throw new BadRequestException('OTP expired');
-    }
+    if (!user.otp || !user.otpExpires || new Date() > user.otpExpires) 
+        throw new BadRequestException('OTP expired or invalid');
+    
 
-    // Validate OTP
     const isValidOtp = await bcrypt.compare(otp, user.otp);
     if (!isValidOtp) throw new BadRequestException('Invalid OTP');
 
-    // Clear OTP fields after successful verification
+    user.isVerified = true; 
     user.otp = null;
-    user.otpExpires = null;
+    user.otpExpires = null;  
     await user.save();
 
     return { message: 'OTP verified successfully' };
 }
+
 
 async refreshToken(token: string) {
     try {
