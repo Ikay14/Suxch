@@ -1,4 +1,4 @@
-import { Document } from "mongoose";
+import mongoose, { Document, Types } from "mongoose";
 import { Schema, Prop, SchemaFactory } from "@nestjs/mongoose";
 
 
@@ -33,6 +33,9 @@ export class User extends Document {
 
     @Prop({ default: Date.now })
     lastActive: Date;
+
+    @Prop({ type: mongoose.Schema.Types.ObjectId, ref: 'Chat'})
+    chat: Types.ObjectId
 
     @Prop({ enum: ['online', 'offline', 'busy', 'away'], default: 'offline' })
     status: string;

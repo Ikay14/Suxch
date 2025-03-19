@@ -9,7 +9,10 @@ import { MongooseModule } from '@nestjs/mongoose';
 import { APP_GUARD } from '@nestjs/core';
 import { AuthModule } from './modules/auth/auth.module';
 import { AuthGuard } from './guard/auth.guard';
+import { UserModule } from './modules/user/user.module';
+import { ChatModule } from './modules/chat/chat.module';
 
+import { RedisModule, RedisModuleOptions } from '@nestjs-modules/ioredis'
 
 @Module({
   imports: [
@@ -23,23 +26,38 @@ import { AuthGuard } from './guard/auth.guard';
         uri: configService.get<string>('MONGO_URI'), // Use the environment variable
       }),
       inject: [ConfigService]  
-    })
-    ,
-    LoggerModule.forRoot({
-      pinoHttp: {
-        level: process.env.NODE_ENV !== 'production' ? 'debug' : 'info',
-        transport: process.env.NODE_ENV !== 'production'
-          ? {
-              target: 'pino-pretty',
-              options: {
-                colorize: true,
-              },
-            }
-          : undefined,   
-      },
+    }),
+    RedisModule.forRootAsync({
+      imports: [ConfigModule],
+      inject: [ConfigService],
+      useFactory: (configService: ConfigService): RedisModuleOptions => ({
+        type: 'single', 
+        options: {
+          host: configService.get<string>('REDIS_HOST', 'localhost'),
+          port: configService.get<number>('REDIS_PORT'),
+          password: configService.get<string>('REDIS_PASSWORD'), 
+        },
+      }),
+    }),
+    LoggerModule.forRootAsync({
+      useFactory: () => ({
+        pinoHttp: {
+          level: process.env.NODE_ENV !== 'production' ? 'debug' : 'info',
+          transport: process.env.NODE_ENV !== 'production'
+            ? {
+                target: 'pino-pretty',
+                options: {
+                  colorize: true,
+                },
+              }
+            : undefined,
+        },
+      }),
     }),
 
-    AuthModule
+    AuthModule,
+    UserModule,
+    ChatModule
   ],
   controllers: [AppController],
   providers: [

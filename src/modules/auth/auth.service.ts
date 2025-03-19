@@ -14,6 +14,7 @@ import { generateResponsePayload } from 'src/helpers/generate.payload';
 import { generateOTP } from 'src/helpers/generate.otp';
 import { RequestChangePasswordDto } from './dto/request.password.dto';
 import { ForgetPasswordDto } from './dto/change.password.dto';
+import { VerifyOtpDto } from './dto/verify.otp.dto';
 
 
 @Injectable()
@@ -150,10 +151,8 @@ export class AuthService {
     return { message: 'Password changed successfully' };
 }
 
-async verifyOtp(email: string, otp: string) {
-    if (typeof email !== 'string' || typeof otp !== 'string') {
-        throw new BadRequestException('Invalid input');
-    }
+async verifyOtp(verifyOtpDto: VerifyOtpDto) {
+    const { otp, email } = verifyOtpDto
 
     const user = await this.userModel.findOne({ email });
     if (!user) throw new NotFoundException('User not found');
@@ -161,7 +160,6 @@ async verifyOtp(email: string, otp: string) {
     if (!user.otp || !user.otpExpires || new Date() > user.otpExpires) 
         throw new BadRequestException('OTP expired or invalid');
     
-
     const isValidOtp = await bcrypt.compare(otp, user.otp);
     if (!isValidOtp) throw new BadRequestException('Invalid OTP');
 

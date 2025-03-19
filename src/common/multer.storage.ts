@@ -2,43 +2,49 @@ import { CloudinaryStorage } from 'multer-storage-cloudinary';
 import multer from 'multer';
 import cloudinary from 'src/config/cloudinary.config';
 import path from 'path';
-
 // Configure Cloudinary storage
 const storage = new CloudinaryStorage({
   cloudinary,
-  params: (req, file) => {
+  params: async (req, file) => {
     let folder = 'uploads'; // Default folder for generic files
+    let format: string | undefined = undefined;
+    let transformation;
 
-    // Determine folder based on file type
+    // Determine folder and format based on file type
     if (file.mimetype.startsWith('image/')) {
-      folder = 'uploads/images'; // Folder for images
+      folder = 'uploads/images';
+      format = 'jpeg'; // Default format for images
+      transformation = [{ width: 500, height: 500, crop: 'limit' }];
     } else if (file.mimetype.startsWith('application/pdf')) {
-      folder = 'uploads/documents'; // Folder for PDF documents
+      folder = 'uploads/documents';
+      format = 'pdf';
+    } else if (file.mimetype.startsWith('application/msword') || file.mimetype.includes('wordprocessingml')) {
+      folder = 'uploads/documents';
+      format = 'docx';
+    } else if (file.mimetype.startsWith('text/plain')) {
+      folder = 'uploads/text';
+      format = 'txt';
     }
 
     return {
       folder,
-      allowedFormats: ['jpeg', 'jpg', 'png', 'pdf', 'doc', 'docx', 'txt'], // Allowed file formats
-      transformation: file.mimetype.startsWith('image/')
-        ? [{ width: 500, height: 500, crop: 'limit' }] // Apply transformations only for images
-        : undefined,
+      format,
+      transformation,
     };
   },
 });
 
-// File filter to allow images, documents, and other files
+// File filter to allow images, PDFs, and text files
 const fileFilter = (
-  req: Request,
-  file: Express.Multer.File,
+  req: Express.Request,
+  file: Express.Request['file'],
   cb: multer.FileFilterCallback
 ) => {
   const allowedFileTypes = /jpeg|jpg|png|pdf|doc|docx|txt/;
-  const extname = allowedFileTypes.test(
-    path.extname(file.originalname).toLowerCase()
-  );
+
   const mimetype = allowedFileTypes.test(file.mimetype);
 
-  if (extname && mimetype) {
+  if ( mimetype) {
     cb(null, true); // Accept the file
   } else {
     cb(

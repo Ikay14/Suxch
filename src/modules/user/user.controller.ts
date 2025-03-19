@@ -16,17 +16,16 @@ export class UserController {
         return this.userService.upsetUser(registerUserDto)   
     }
 
-    @Post('upload')
+    @Post('upload/:userId')
     @UseInterceptors(FileInterceptor('file', multerOptions))
     uploadFile(
         @UploadedFile() file: Express.Request['file'],
         @Param('userId') userId: string
     ) {
-        console.log(file);
         return this.userService.uploadProfilePicture(file, userId)  
     }
 
-    @Delete('profile')
+    @Delete('profile/:userId')
     async deleteProfile(
        @Body() imageUrl: string,  
        @Param('userId') userId: string
@@ -34,14 +33,14 @@ export class UserController {
         return this.userService.deleteProfilePicture(imageUrl, userId)
     }
 
-    @Get('userId')
+    @Get(':userId')
     async getUserById(
         @Param('userId') userId: string
     ){
-        return this.getUserById(userId)
+        return this.userService.getUserById(userId)
     }
 
-    @Get('query')
+    @Get('by-any/:key/:value') 
     async getUserByAnyKey(
         @Param() params: { key: string; value: string },
         @Query() query: any
@@ -56,9 +55,9 @@ export class UserController {
         return this.userService.findAll(query)
     }
 
-    @Delete('query/all')
+    @Delete(':userId')
     async deleteUser(
-        @Query() query: any
+        @Query() query: any 
     ){
         return this.userService.findAll(query)
     }

@@ -25,17 +25,19 @@ export class UserService {
           }
     }
 
-    async uploadProfilePicture(file: Express.Request['file'], userId: string,) {
-        const user = await this.getUserById(userId)
+    async uploadProfilePicture(file: Express.Request['file'], userId: string) {
+        const user = await this.userModel.findById(userId)
+        
+        if(!user) throw new NotFoundException('user not found')
         const folder = `profile-pictures/${userId}`;
 
-        if (user.data.avatar) await this.cloudinaryService.deleteFile(user.data.avatar);
+        if (user.avatar) await this.cloudinaryService.deleteFile(user.avatar);
 
         const result = await this.cloudinaryService.uploadFile(file, folder, 'image');
        
-        user.data.avatar = result.secure_url
-        user.data.profileUrl = result.public_id
-        await user.data.save()
+        user.avatar = result.secure_url
+        user.profileUrl = result.public_id
+        await user.save()
 
         return {
           msg: 'Profile picture uploaded successfully',

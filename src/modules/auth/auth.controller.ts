@@ -7,6 +7,7 @@ import { skipAuth } from 'src/guard/custom.guard';
 import { ApiTags } from '@nestjs/swagger';
 import { RequestChangePasswordDto } from './dto/request.password.dto';
 import { ForgetPasswordDto } from './dto/change.password.dto';
+import { VerifyOtpDto } from './dto/verify.otp.dto';
 
 @skipAuth()
 @ApiTags('Authentication')
@@ -46,8 +47,10 @@ export class AuthController {
   
     @Patch('verify')
     async verifyOtp(
-        @Body() email: string, otp: string,) {
-        return this.authService.verifyOtp(email,otp);
+        @Body() verifyOtpDto: VerifyOtpDto) {
+            console.log();
+            
+        return this.authService.verifyOtp(verifyOtpDto);
     } 
 
     @Post('logout')

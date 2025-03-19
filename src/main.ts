@@ -9,7 +9,7 @@ import { IoAdapter } from '@nestjs/platform-socket.io';
 import * as fs from 'fs'; 
 import * as cors from 'cors';
 import * as cookieParser from 'cookie-parser';
-import { initializeDatabase } from './db/data.source';
+import { client, initializeDatabase } from './db/data.source';
 import { ConfigService } from '@nestjs/config';
 
 
@@ -18,18 +18,33 @@ async function bootstrap() {
     bufferLogs: true,
   });
 
+  // MongoDB connection
   try {
     await initializeDatabase();
-    console.log('Oya na has been initialized!');
+    console.log('MongoBD has been initialized!');
   } catch (err) {
-    console.error('Error during Oya na initialization', err);
+    console.error('Error during MongoDB initialization', err);
     process.exit(1);
+  }
+
+  // Redis Connection
+   try {
+      await client.connect();
+      console.log('Redis has been initialized');
+      
+      // Test Redis connection
+      await client.set('foo', 'bar');
+      const result = await client.get('foo');
+      console.log('Test value from Redis:', result);
+    } catch (err) {
+      console.error('Error during Redis initialization:', err);
+      process.exit(1);
   }
 
   const logger = app.get(Logger);
   
   app.enable('trust proxy');
-  // app.useLogger(logger);
+  app.useLogger(logger);
   app.useGlobalPipes(new ValidationPipe());
   app.setGlobalPrefix('api/v1', { exclude: ['api', 'api/v1', 'api/docs',] });
 
@@ -60,8 +75,10 @@ async function bootstrap() {
   });
 
   const port = app.get<ConfigService>(ConfigService).get<number>('server.port');
+
   await app.listen(port); 
   console.log(`Swagger is running at http://localhost:${port}/api/docs`);
+
   logger.log({ message: 'server started!', port, url: `http://localhost:${port}/api/v1` });
 
 } 
