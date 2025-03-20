@@ -8,7 +8,7 @@ export enum MessageType {
   }
 
 
-export class CreateMsgDto {
+export class UploadMsgMediaDto {
 
     @IsNotEmpty()
     senderId: string
@@ -18,15 +18,11 @@ export class CreateMsgDto {
 
     @IsUUID()
     @IsNotEmpty()
-    chatId: string
+    msgId: string
 
     @IsString()
     @IsNotEmpty()
-    content: string
-
-    @IsString()
-    @IsNotEmpty()
-    messageType: MessageType
+    contentType: MessageType
 
     @IsOptional()
     @IsString()

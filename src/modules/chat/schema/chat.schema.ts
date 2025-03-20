@@ -32,6 +32,12 @@ export class Chat extends Document {
   
     @Prop({ type: String, enum: MessageStatus, default: MessageStatus.SENT })
     status: MessageStatus;
+    
+    @Prop()
+    content: string; // For text messages
+
+    @Prop()
+    fileUrl: string; // For media messages (image, video, audio)
   
     @Prop({ type: String, enum: MessageType, default: MessageType.TEXT })
     messageType: MessageType;

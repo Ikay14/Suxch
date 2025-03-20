@@ -10,12 +10,17 @@ import { ReadReceiptDto } from "./dto/read.msg.dto";
 import { InjectModel } from "@nestjs/mongoose";
 import { Chat } from "./schema/chat.schema";
 import { Model } from "mongoose";
+import { UploadMsgMediaDto } from "./dto/upload.media.dto";
+import { User } from "../user/schema/user.schema";
+import { forwardRef, Inject } from "@nestjs/common";
 
 @WebSocketGateway({ namespace: 'chat' })
 export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
-    constructor(private chatService: ChatService,
-        @InjectModel(Chat.name) private chatModel: Model<Chat>
-     ){}
+    constructor(
+        @Inject(forwardRef(() => ChatService)) private chatService: ChatService,
+        @InjectModel(Chat.name) private chatModel: Model<Chat>,
+      
+     ){ console.log('ChatGateway initialized')}
     @WebSocketServer() server : Server
 
     handleConnection(client: Socket) {
@@ -23,7 +28,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
     }
 
     handleDisconnect(client: Socket) {
-        console.log(`Client disconnected: ${client.id}`);
+        console.log(`Client disconnected: ${client.id}`); 
     }
 
     @SubscribeMessage('message')
@@ -44,6 +49,20 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
      return message;
     }
+
+    @SubscribeMessage('fileUploaded')
+    async handleMediaUpload(
+        @MessageBody() uploadMsgMediaDto: UploadMsgMediaDto,
+        @ConnectedSocket() client: Socket
+    ){
+        const { senderId, receiverId } = uploadMsgMediaDto
+
+        const room = [senderId, receiverId].sort().join('-');
+        client.join(room);
+
+        this.server.to(room).emit('fileUploaded', uploadMsgMediaDto);
+    }
+    
 
 
     @SubscribeMessage('read_receipt')
