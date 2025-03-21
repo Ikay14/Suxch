@@ -168,5 +168,9 @@ export class ChatService {
             data: responseDto
        }
     }
+
+    async updateUserMsg(){
+
+    }
     
 }
