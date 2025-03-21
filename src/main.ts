@@ -46,7 +46,8 @@ async function bootstrap() {
   app.enable('trust proxy');
   app.useLogger(logger);
   app.useGlobalPipes(new ValidationPipe());
-  app.setGlobalPrefix('api/v1', { exclude: ['api', 'api/v1', 'api/docs',] });
+  app.setGlobalPrefix('api/v1');
+  // app.setGlobalPrefix('api/v1', { exclude: ['api', 'api/v1', 'api/docs',] });
 
    // Serve Swagger
    const config = new DocumentBuilder()
