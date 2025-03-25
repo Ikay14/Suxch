@@ -39,8 +39,8 @@ export class ChatController {
     }
 
     @Get('chatId')
-    async getByChatId(@Param('chatId') chatId: string){
-        return this.chatService.getChatById(chatId)
+    async getByChatId(@Param('chatId') chatId: string){ 
+        return this.chatService.getChatById(chatId)   
     }
 
     @Patch(':msgId')

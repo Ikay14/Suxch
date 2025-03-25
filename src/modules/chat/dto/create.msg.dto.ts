@@ -10,24 +10,15 @@ export enum MessageType {
 
 export class CreateMsgDto {
 
-    @IsNotEmpty()
     senderId: string
     
-    @IsNotEmpty()
     receiverId: string
 
-    @IsUUID()
     chatId: string
 
-    @IsString()
-    @IsNotEmpty()
     content: string
 
-    @IsString()
-    @IsNotEmpty()
     messageType: MessageType
 
-    @IsOptional()
-    @IsString()
-    replyToMsg: string
-}
+    replyTo: string  
+} 

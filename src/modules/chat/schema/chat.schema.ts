@@ -40,14 +40,17 @@ export class Chat extends Document {
     content: string; // For text messages
 
     @Prop()
+    replyTo: string; // For text messages
+
+    @Prop()
     fileUrl: string; // For media messages (image, video, audio)
   
     @Prop({ type: String, enum: MessageType, default: MessageType.TEXT })
     messageType: MessageType;
   
-    @Prop({ default: false })
+    @Prop({ default: false }) 
     isDeleted: boolean;
-
+  
     @Prop()
     isDeletedAt: Date;
 

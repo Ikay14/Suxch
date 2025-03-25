@@ -75,7 +75,7 @@ export class UserService {
         const { skip = 0, limit = 0 } = query;
     
         const result = await this.userModel
-          .find({ [key]: value, isDeleted: false })
+          .find({ [key]: value, isDeleted: { $ne: true } })
           .sort({ createdAt: -1 })
           .skip(skip)
           .limit(limit)

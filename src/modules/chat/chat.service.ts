@@ -24,7 +24,6 @@ import { populate } from 'dotenv';
 @Injectable()
 export class ChatService {
     constructor (
-        @Inject(forwardRef(() => ChatGateway)) private chatGateway: ChatGateway,
         @InjectModel(Chat.name) 
         private chatModel: Model<Chat>,
         @InjectModel(User.name)
@@ -35,29 +34,39 @@ export class ChatService {
     ){console.log('ChatService initialized');}
 
     async createMessage(createMsg: CreateMsgDto) {
-        const msgId = uuidv4();
         
-        const { senderId, receiverId, content, messageType } = createMsg;
-    
-        if (!senderId || !receiverId) 
-            throw new BadRequestException('Sender and receiver must be provided');
+    const { senderId, receiverId, content, messageType, replyTo } = createMsg;
+    if (!senderId || !receiverId || !content || !messageType ) 
+        throw new BadRequestException('please provide all fields')
+        console.log('Received payload:', createMsg);
+        const msgId = uuidv4();
 
-        const chatRoom = await this.createChatRoom(senderId, receiverId);
+         // Validate replyTo message exists if provided
+        if (replyTo) {
+         const parentMessage = await this.chatModel.findOne({ messageId: replyTo });
+         if (!parentMessage) throw new BadRequestException('Original message not found');
+  }
+        
+     console.log('values:', {createMsg} );
+
+        const chatRoom = await this.createChatRoom(senderId, receiverId);      
     
-        // Create the message in one step (assumes sender & receiver exist)
+
         const newMsg = await this.chatModel.create({
             chatId: chatRoom,
             messageId: msgId,
             senderId,
             receiverId,
-            messageType,
+            messageType, 
             content
-        });
-    
+        }); 
+        
+        console.log('Message saved to DB:', newMsg);
+
         return {
             msg: "Message sent",
             data: newMsg
-        };
+        }; 
     }
 
     async uploadFile(uploadMsgMediaDto: UploadMsgMediaDto, file: Express.Request['file']){
@@ -93,8 +102,8 @@ export class ChatService {
         )
 
 
-        // Emit the WebSocket event to the room
-        this.chatGateway.server.to(chatRoom).emit('fileUploaded', uploadMsgMediaDto)
+        // // Emit the WebSocket event to the room
+        // this.chatGateway.server.to(chatRoom).emit('fileUploaded', uploadMsgMediaDto)
     
         return {
             msg: 'Chat media uploaded successfully',
@@ -111,7 +120,7 @@ export class ChatService {
         if(cachedChat)
             return {
         msg: 'message retrieved successfully',
-        data: JSON.parse(cachedChat)
+        data: JSON.parse(cachedChat) 
     }
 
         const chat =  await this.chatModel.findOne({chatId: chatId, isDeleted: { $ne: true }})

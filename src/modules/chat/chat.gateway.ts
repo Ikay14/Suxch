@@ -12,12 +12,18 @@ import { Chat } from "./schema/chat.schema";
 import { Model } from "mongoose";
 import { UploadMsgMediaDto } from "./dto/upload.media.dto";
 import { User } from "../user/schema/user.schema";
-import { forwardRef, Inject } from "@nestjs/common";
+import { forwardRef, Inject, UploadedFile, UseFilters, UseInterceptors } from "@nestjs/common";
+import { WsExceptionFilter } from "src/common/ws-exception.filter";
+import { SocketAck } from "src/common/decorator/socket-ack.decorator";
+import { FileInterceptor } from "@nestjs/platform-express";
+import { multerOptions } from "src/common/multer.storage";
+import { UpdateMsgDto } from "./dto/update.msg.dto";
 
 @WebSocketGateway({ namespace: 'chat' })
+@UseFilters(new WsExceptionFilter())
 export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
     constructor(
-        @Inject(forwardRef(() => ChatService)) private chatService: ChatService,
+       private chatService: ChatService,
         @InjectModel(Chat.name) private chatModel: Model<Chat>,
       
      ){ console.log('ChatGateway initialized')}
@@ -45,38 +51,108 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
         }
       }
 
-    @SubscribeMessage('message')
-    async handleMessage(
-        @ConnectedSocket()client: Socket,
-        @MessageBody() createMsg: CreateMsgDto){ 
+      @SubscribeMessage('message')
+      async handleMessage(
+          @ConnectedSocket() client: Socket,
+          @MessageBody() createMsg: CreateMsgDto) {
+          try {
+              const { senderId, receiverId } = createMsg;        
+              const message = await this.chatService.createMessage(createMsg);
+              console.log('Message created:', message);
 
-    const { senderId, receiverId, chatId } = createMsg;        
+              const chatId = [senderId, receiverId].sort().join('-'); 
+              client.join(chatId);
+              this.server.to(chatId).emit('message', { message, sender: senderId, receiver: receiverId });
+              return message;
+          } catch (error) {
+              console.error('Error in handleMessage:', error);
+              throw new Error('Failed to process message');
+          }
+      }
 
-    const message = await this.chatService.createMessage(createMsg)
+    
+      @SubscribeMessage('fileUpload')
+      @UseInterceptors(FileInterceptor('file', multerOptions)) 
+      async handleMediaUpload(
+      @MessageBody() uploadMsgMediaDto: UploadMsgMediaDto,
+      @ConnectedSocket() client: Socket,
+      @UploadedFile() file: Express.Request['file'], 
+      @SocketAck() ack: (response: { status: string; message?: string; data?: any }) => void,
+      ) {
 
-     // Ensure both sender and receiver are in the same room
-     client.join(chatId);
+    // Upload the file to Cloudinary
+    const fileUrl = await this.chatService.uploadFile(uploadMsgMediaDto, file);
 
-     // Emit message to both sender & receiver
-     this.server.to(chatId).emit('message', { message, sender: senderId, receiver: receiverId });
+    // Join the chat room
+    client.join(uploadMsgMediaDto.chatId);
 
-     return message;
-    }
-
-    @SubscribeMessage('fileUploaded')
-    async handleMediaUpload(
-        @MessageBody() uploadMsgMediaDto: UploadMsgMediaDto,
-        @ConnectedSocket() client: Socket
-    ){
-        const { chatId } = uploadMsgMediaDto
-
-        // Ensure both sender and receiver are in the same room
-        client.join(chatId);
-
-        this.server.to(chatId).emit('fileUploaded', uploadMsgMediaDto);
-    }
+    // Acknowledge success
+    ack({
+      status: 'success',
+      message: 'File uploaded successfully',
+      data: { chatId: uploadMsgMediaDto.chatId, fileUrl },
+    });
+    
+    // Acknowledge failure
+    ack({
+      status: 'error',
+      message: 'Failed to retrieve chats',
+    });
+  }
     
 
+
+  @SubscribeMessage('deleteMessage')
+  async handleDeleteMessage(
+    @MessageBody('messageId') messageId: string,
+    @SocketAck() ack: (response: { status: string; message: string; data?: any }) => void,
+  ) {
+    const result = await this.chatService.delMsgById(messageId);
+    ack({ status: 'success', message: result.msg });
+  }
+
+  @SubscribeMessage('updateMessage')
+  async handleUpdateMessage(
+    @MessageBody() updateMsgDto: UpdateMsgDto,
+    @SocketAck() ack: (response: { status: string; message: string; data?: any }) => void,
+  ) {
+    const result = await this.chatService.updateUserMsg(updateMsgDto);
+    ack({ status: 'success', message: result.msg, data: result.data });
+
+    return result;
+  }
+
+  @SubscribeMessage('deleteChat')
+  async handleDeleteChat(
+    @MessageBody('chatId') chatId: string,
+    @SocketAck() ack: (response: { status: string; message: string; data?: any }) => void,
+  ) {
+    const result = await this.chatService.delChatById(chatId);
+    ack({ status: 'success', message: result.msg });
+  }
+
+  @SubscribeMessage('getChatById')
+  async handleGetChatById(
+    @MessageBody('chatId') chatId: string,
+    @SocketAck() ack: (response: { status: string; message: string; data?: any }) => void,
+  ) {
+    const result = await this.chatService.getChatById(chatId);
+    ack({ status: 'success', message: result.msg, data: result.data });
+
+    return result;
+  }
+
+  @SubscribeMessage('getUserChats')
+  async handleGetUserChats( 
+    @MessageBody() payload: { userId: string; skip: number; limit: number },
+    @SocketAck() ack: (response: { status: string; message: string; data?: any }) => void,
+  ) {
+    const { userId, skip, limit } = payload;
+    const result = await this.chatService.getUserChats(userId, skip, limit);
+    ack({ status: 'success', message: result.msg, data: result.data });
+
+    return result;
+  }
 
     @SubscribeMessage('read_receipt')
     async handleReadReceipt(
