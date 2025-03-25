@@ -17,8 +17,7 @@ export class UploadMsgMediaDto {
     receiverId: string
 
     @IsUUID()
-    @IsNotEmpty()
-    msgId: string
+    chatId: string
 
     @IsString()
     @IsNotEmpty()

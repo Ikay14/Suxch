@@ -25,27 +25,40 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
     handleConnection(client: Socket) {
         console.log(`Client connected: ${client.id}`);
-    }
-
-    handleDisconnect(client: Socket) {
-        console.log(`Client disconnected: ${client.id}`); 
-    }
+      
+        
+        const userId = client.handshake.query.userId;
+        if (userId) {
+          client.join(userId); // Join user-specific room
+        }
+      }
+      
+      handleDisconnect(client: Socket) {
+        console.log(`Client disconnected: ${client.id}`);
+      
+        // Remove user from rooms
+        const userId = client.handshake.query.userId;
+        if (userId) {
+          if (typeof userId === 'string') {
+            client.leave(userId);
+          }
+        }
+      }
 
     @SubscribeMessage('message')
     async handleMessage(
         @ConnectedSocket()client: Socket,
-        @MessageBody() createMsg: CreateMsgDto){
+        @MessageBody() createMsg: CreateMsgDto){ 
 
-    const { senderId, receiverId } = createMsg;        
+    const { senderId, receiverId, chatId } = createMsg;        
 
     const message = await this.chatService.createMessage(createMsg)
 
      // Ensure both sender and receiver are in the same room
-     const room = [senderId, receiverId].sort().join('-');
-     client.join(room);
+     client.join(chatId);
 
      // Emit message to both sender & receiver
-     this.server.to(room).emit('message', { message, sender: senderId, receiver: receiverId });
+     this.server.to(chatId).emit('message', { message, sender: senderId, receiver: receiverId });
 
      return message;
     }
@@ -55,12 +68,12 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
         @MessageBody() uploadMsgMediaDto: UploadMsgMediaDto,
         @ConnectedSocket() client: Socket
     ){
-        const { senderId, receiverId } = uploadMsgMediaDto
+        const { chatId } = uploadMsgMediaDto
 
-        const room = [senderId, receiverId].sort().join('-');
-        client.join(room);
+        // Ensure both sender and receiver are in the same room
+        client.join(chatId);
 
-        this.server.to(room).emit('fileUploaded', uploadMsgMediaDto);
+        this.server.to(chatId).emit('fileUploaded', uploadMsgMediaDto);
     }
     
 
@@ -88,11 +101,15 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
         @ConnectedSocket() client: Socket,
         @MessageBody() typingDto: TypingDto
     ) {
-        const { senderId, receiverId } = typingDto
+        const { senderId, receiverId, chatId } = typingDto
          
         // Ensure both sender and receiver are in the same room
-        const room = [senderId, receiverId].sort().join('-');
-        this.server.to(room).emit('typing', { senderId})
+        this.server.to(chatId).emit('typing', { senderId})
+
+     // Automatically stop typing after 5 seconds
+     setTimeout(() => {
+        this.server.to(chatId).emit('stop_typing', { senderId });
+    }, 5000);
     }
 
     @SubscribeMessage('stop_typing')

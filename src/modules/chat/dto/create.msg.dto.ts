@@ -17,7 +17,6 @@ export class CreateMsgDto {
     receiverId: string
 
     @IsUUID()
-    @IsNotEmpty()
     chatId: string
 
     @IsString()

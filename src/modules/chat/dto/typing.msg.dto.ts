@@ -8,4 +8,6 @@ export class TypingDto {
     @IsNotEmpty()
     senderId: string
 
+    chatId: string
+
 }

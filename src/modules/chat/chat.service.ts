@@ -41,9 +41,12 @@ export class ChatService {
     
         if (!senderId || !receiverId) 
             throw new BadRequestException('Sender and receiver must be provided');
+
+        const chatRoom = await this.createChatRoom(senderId, receiverId);
     
         // Create the message in one step (assumes sender & receiver exist)
         const newMsg = await this.chatModel.create({
+            chatId: chatRoom,
             messageId: msgId,
             senderId,
             receiverId,
@@ -57,11 +60,12 @@ export class ChatService {
         };
     }
 
-    async uploadMedia(uploadMsgMediaDto: UploadMsgMediaDto, file: Express.Request['file']){
+    async uploadFile(uploadMsgMediaDto: UploadMsgMediaDto, file: Express.Request['file']){
+        const { senderId, receiverId, contentType } = uploadMsgMediaDto;
+        
         const msgId = uuidv4();
 
-        const { senderId, receiverId, contentType } = uploadMsgMediaDto;
-
+       
         if (!senderId || !receiverId) 
             throw new BadRequestException('Sender and receiver must be provided');
 
@@ -75,21 +79,22 @@ export class ChatService {
         
         const fileUrl = await this.cloudinaryService.uploadFile(file, folder, content)
 
+        const chatRoom = await this.createChatRoom(senderId, receiverId)
+
         const newMsg = await this.chatModel.create(
             {
                 senderId,
                 receiverId,
+                chatId: chatRoom,
                 messageId: msgId,
                 messageType: content,
                 fileUrl
             }
         )
 
-         // Create the room name
-         const room = [senderId, receiverId].sort().join('-');
 
         // Emit the WebSocket event to the room
-        this.chatGateway.server.to(room).emit('fileUploaded', uploadMsgMediaDto)
+        this.chatGateway.server.to(chatRoom).emit('fileUploaded', uploadMsgMediaDto)
     
         return {
             msg: 'Chat media uploaded successfully',
@@ -97,42 +102,42 @@ export class ChatService {
         }
     }
 
-    async getMessageById(msgId: string){
+    async getChatById(chatId: string){
 
-        const msgKey = `messageKey:${msgId}`
+        const chatKey = `messageKey:${chatId}`
 
-        const cachedMsg = await this.redisClient.get(msgKey)
+        const cachedChat = await this.redisClient.get(chatKey)
 
-        if(cachedMsg)
+        if(cachedChat)
             return {
         msg: 'message retrieved successfully',
-        data: JSON.parse(cachedMsg)
+        data: JSON.parse(cachedChat)
     }
 
-        const message =  await this.chatModel.findOne({messageId: msgId})
+        const chat =  await this.chatModel.findOne({chatId: chatId, isDeleted: { $ne: true }})
         .populate('senderId')
         .populate('receiverId')
 
-        if(!message) throw new NotFoundException('message not found')
+        if(!chat) throw new NotFoundException('chat not found')
 
           await this.redisClient.set(
-            msgKey,
-            JSON.stringify(message),
+            chatKey,
+            JSON.stringify(chat),
             'EX',
             3600
           )
 
-        const responseDto = plainToClass(MessageDto, message, {
+        const responseDto = plainToClass(MessageDto, chat, {
             excludeExtraneousValues: true
         })    
 
         return {
-            msg: 'Message retrieved successfully',
+            msg: 'Chat retrieved successfully',
             data: responseDto
         }    
     }
 
-    async getUserChats(userId: string){
+    async getUserChats(userId: string,  skip: number,  limit: number){
 
         const chatKey = `userChatsKey:${userId}`
 
@@ -146,12 +151,51 @@ export class ChatService {
         const user = await this.userModel.findById(userId)
         if(!user) throw new NotFoundException('user not found')
 
-        const userChats = await this.chatModel.find({
-         $or: [ { senderId:userId },{ receiverId: userId }]
-        })
-        .populate('senderId')
-        .populate('receiverId')
-        .lean
+        const userChats = await this.chatModel.aggregate([
+
+         { 
+            $match: { 
+                $or: [ { senderId: userId }, { receiverId: userId } ],
+                isDeleted: {$ne : true}
+        },   
+         },
+
+        {  $group:  { _id: '$chatId', 
+            participants: { $addToSet: "$senderId" }, // Collect unique senderIds
+            lastMessage: { $last: "$$ROOT" } 
+         } },
+
+        { $lookup : {
+            from : 'users',
+            localField: 'lastMessage.senderId',
+            foreignField: '_id',
+            as: 'sender'
+        }},
+
+        { $lookup : {
+            from : 'users',
+            localField: 'lastMessage.receiverId',
+            foreignField: '_id',
+            as: 'receiver'
+        }},
+        
+        { $project : {
+            chatId : '$_id',
+            participants: 1,
+            lastMessage: {
+                   content: "$lastMessage.content",
+                   messageType: "$lastMessage.messageType",
+                    senderId: "$lastMessage.senderId",
+                   receiverId: "$lastMessage.receiverId",
+                   fileUrl: "$lastMessage.fileUrl",
+                   messageId: "$lastMessage.messageId",
+                   createdAt: "$lastMessage.createdAt"
+               },
+               sender: { $arrayElemAt : ["$sender", 0] },
+               receiver: { $arrayElemAt : ["$receiver", 0] }
+        }}
+    ]).skip(skip)
+    .limit(limit)
 
         await this.redisClient.set(
             chatKey,
@@ -159,6 +203,7 @@ export class ChatService {
             'EX',
             3600 
         )
+
        const responseDto = plainToClass(MessageDto, userChats, {
         excludeExtraneousValues: true
        }) 
@@ -169,8 +214,67 @@ export class ChatService {
        }
     }
 
-    async updateUserMsg(){
 
+    async delMsgById(msgId: string){
+
+    const msg =  await this.chatModel.findOneAndUpdate(
+        {messageId: msgId},
+        {isDeleted: true},
+        { new: true }
+    )
+        
+        if(!msg) throw new NotFoundException('message not found')
+
+        return {
+            msg: 'message deleted successfully',
+        }    
+    }
+
+
+
+    async updateUserMsg(updateMsgDto: UpdateMsgDto){
+
+        const { userId, messageId, newContent } = updateMsgDto
+
+        const user = await this.userModel.findById(userId)
+        if(!user) throw new NotFoundException('user not found')
+        
+        const message = await this.chatModel.findOneAndUpdate(
+            { messageId }, 
+            { $set: { content: newContent } },
+            { new: true }
+        )    
+      
+        const responseDto = plainToClass(MessageDto, message, {
+            excludeExtraneousValues: true
+        });
+
+        return {
+            msg: 'Message updated successfully',
+            data: responseDto
+        };
+    }
+
+
+    async delChatById(chatId: string){
+
+        const chat =  await this.chatModel.findOneAndUpdate(
+            {chatId: chatId},
+            {isDeleted: true},
+            { new: true }
+        )
+            
+            if(!chat) throw new NotFoundException('chat not found')
+    
+            return {
+                msg: 'chat deleted successfully',
+            }    
+        }
+
+
+    private async createChatRoom  (senderId: string, receiverId: string)  {
+        const chatId = uuidv4()
+        return chatId
     }
     
 }

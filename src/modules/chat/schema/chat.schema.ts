@@ -1,7 +1,7 @@
 import { Schema, Prop, SchemaFactory } from "@nestjs/mongoose";
 import { UUID } from "crypto";
 import mongoose, { Document, Types } from "mongoose";
-
+import { v4 as uuidv4 } from "uuid";
 export enum MessageStatus {
     SENT = 'sent',
     DELIVERED = 'delivered',
@@ -18,8 +18,11 @@ export enum MessageStatus {
 @Schema({ timestamps: true })
 export class Chat extends Document {
 
-    @Prop({  })
+    @Prop({ type: String, default: () => uuidv4() }) @Prop({  })
     messageId: UUID;
+
+    @Prop({ type: String, default: () => uuidv4() })
+    chatId: string
 
     @Prop({ type: mongoose.Schema.Types.ObjectId, ref: 'User',  })
     senderId: Types.ObjectId;

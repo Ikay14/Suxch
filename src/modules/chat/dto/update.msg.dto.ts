@@ -9,6 +9,7 @@ export class UpdateMsgDto {
     @IsNotEmpty()
     messageId: string
 
+
     @IsString()
     @IsNotEmpty()
     newContent: string
