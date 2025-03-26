@@ -46,8 +46,11 @@ export class User extends Document {
     @Prop({ type: [String], default: [] })
     contacts: string[];
 
-    @Prop({ type: [String], default: [] })
-    groups: string[];
+    @Prop({ type: mongoose.Schema.Types.ObjectId, ref: 'Group'})
+    groupsJoined: string[];
+
+    @Prop({ type: mongoose.Schema.Types.ObjectId, ref: 'Group'})
+    groupsCreated: string[];
 
     @Prop({ default: 0 })
     unreadMessagesCount: number;

@@ -1,18 +1,37 @@
-// ws-exception.filter.ts
-import { Catch } from '@nestjs/common';
+import { ArgumentsHost, Catch, ExceptionFilter, HttpException, Logger } from '@nestjs/common';
 import { WsException } from '@nestjs/websockets';
-import { ArgumentsHost } from '@nestjs/common';
 
-@Catch()
-export class WsExceptionFilter {
-  catch(exception: unknown, host: ArgumentsHost) {
-    const ctx = host.switchToWs();
-    const client = ctx.getClient();
-    
-    const error = exception instanceof Error 
-      ? { message: exception.message }
-      : { message: 'An unexpected error occurred' };
+@Catch(WsException, HttpException)
+export class WsExceptionFilter implements ExceptionFilter {
+  private readonly logger = new Logger(WsExceptionFilter.name);
 
-    client.emit('error', error);
+  catch(exception: WsException | HttpException, host: ArgumentsHost) {
+    const client = host.switchToWs().getClient();
+    const data = host.switchToWs().getData();
+
+    let errorResponse: any;
+
+    if (exception instanceof WsException) {
+      errorResponse = {
+        status: 'error',
+        message: exception.message,
+      };
+    } else if (exception instanceof HttpException) {
+      const response = exception.getResponse();
+      errorResponse = {
+        status: 'error',
+        message: typeof response === 'string' ? response : (response as any).message,
+      };
+    } else {
+      errorResponse = {
+        status: 'error',
+        message: 'An unknown error occurred',
+      };
+    }
+
+    this.logger.error(`Exception: ${JSON.stringify(errorResponse)}`, exception.stack);
+
+    // Emit the error to the client
+    client.emit('exception', errorResponse);
   }
 }

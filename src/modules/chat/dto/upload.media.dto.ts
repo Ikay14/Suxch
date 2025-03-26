@@ -4,7 +4,8 @@ export enum MessageType {
     TEXT = 'text',
     IMAGE = 'image',
     VIDEO = 'video',
-    AUDIO = 'audio'
+    AUDIO = 'audio',
+    DOCUMENT = 'document'
   }
 
 
@@ -18,6 +19,9 @@ export class UploadMsgMediaDto {
 
     @IsUUID()
     chatId: string
+
+    @IsString()
+    file: string
 
     @IsString()
     @IsNotEmpty()

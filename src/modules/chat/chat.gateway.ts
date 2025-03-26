@@ -58,49 +58,54 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
           try {
               const { senderId, receiverId } = createMsg;        
               const message = await this.chatService.createMessage(createMsg);
-              console.log('Message created:', message);
 
               const chatId = [senderId, receiverId].sort().join('-'); 
               client.join(chatId);
               this.server.to(chatId).emit('message', { message, sender: senderId, receiver: receiverId });
               return message;
           } catch (error) {
-              console.error('Error in handleMessage:', error);
+             
               throw new Error('Failed to process message');
           }
       }
 
-    
       @SubscribeMessage('fileUpload')
       @UseInterceptors(FileInterceptor('file', multerOptions)) 
       async handleMediaUpload(
-      @MessageBody() uploadMsgMediaDto: UploadMsgMediaDto,
-      @ConnectedSocket() client: Socket,
-      @UploadedFile() file: Express.Request['file'], 
-      @SocketAck() ack: (response: { status: string; message?: string; data?: any }) => void,
+        @MessageBody() uploadMsgMediaDto: UploadMsgMediaDto,
+        @ConnectedSocket() client: Socket,
+        @UploadedFile() file: Express.Request['file'],
+        @SocketAck() ack: (response: { status: string; message?: string; data?: any }) => void,
       ) {
-
-    // Upload the file to Cloudinary
-    const fileUrl = await this.chatService.uploadFile(uploadMsgMediaDto, file);
-
-    // Join the chat room
-    client.join(uploadMsgMediaDto.chatId);
-
-    // Acknowledge success
-    ack({
-      status: 'success',
-      message: 'File uploaded successfully',
-      data: { chatId: uploadMsgMediaDto.chatId, fileUrl },
-    });
+        try {
+          console.log('Received file:', file);
+      
+          // Upload the file to Cloudinary
+          const fileUrl = await this.chatService.uploadFile(uploadMsgMediaDto, file);
+      
+          // Join the chat room
+          client.join(uploadMsgMediaDto.chatId);
+      
+          // Acknowledge success
+          ack({
+            status: 'success',
+            message: 'File uploaded successfully',
+            data: { chatId: uploadMsgMediaDto.chatId, fileUrl },
+          });
+        } catch (error) {
+          console.error('Error in handleMediaUpload:', error);
+      
+          // Acknowledge failure
+          ack({
+            status: 'error',
+            message: error.message || 'File upload failed',
+          });
+      
+          // Re-throw the error for further handling by exception filters
+          throw error;
+        }
+      }
     
-    // Acknowledge failure
-    ack({
-      status: 'error',
-      message: 'Failed to retrieve chats',
-    });
-  }
-    
-
 
   @SubscribeMessage('deleteMessage')
   async handleDeleteMessage(
@@ -109,6 +114,8 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
   ) {
     const result = await this.chatService.delMsgById(messageId);
     ack({ status: 'success', message: result.msg });
+
+    return result
   }
 
   @SubscribeMessage('updateMessage')
@@ -129,6 +136,8 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
   ) {
     const result = await this.chatService.delChatById(chatId);
     ack({ status: 'success', message: result.msg });
+
+    return result
   }
 
   @SubscribeMessage('getChatById')
@@ -139,6 +148,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
     const result = await this.chatService.getChatById(chatId);
     ack({ status: 'success', message: result.msg, data: result.data });
 
+    
     return result;
   }
 
@@ -152,11 +162,12 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
     ack({ status: 'success', message: result.msg, data: result.data });
 
     return result;
+    
   }
 
     @SubscribeMessage('read_receipt')
     async handleReadReceipt(
-        @ConnectedSocket() client: Socket,
+        @ConnectedSocket() client: Socket,  
         @MessageBody() readReceiptDto: ReadReceiptDto
     ) {
         const { messageId, receiverId } = readReceiptDto
@@ -164,7 +175,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
     // Update message status in database
         await this.chatModel.updateOne(
         { _id: messageId, receiver: receiverId },
-        { $set: { status: 'read', readAt: new Date() } }
+        { $set: { status: 'read', readAt: new Date() } }  
       );
 
     // Notify sender that the message was read

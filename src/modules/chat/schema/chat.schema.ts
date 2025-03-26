@@ -12,7 +12,8 @@ export enum MessageStatus {
     TEXT = 'text',
     IMAGE = 'image',
     VIDEO = 'video',
-    AUDIO = 'audio'
+    AUDIO = 'audio',
+    DOCUMENT = 'document'
   }
 
 @Schema({ timestamps: true })
