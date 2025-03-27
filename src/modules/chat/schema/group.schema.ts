@@ -59,3 +59,18 @@ export class Group extends Document {
 }
 
 export const GroupSchema = SchemaFactory.createForClass(Group)
+
+
+// {
+//     "group": "64f1a2b3c4d5e6f7g8h9i0j1",
+//     "sender": "64f1a2b3c4d5e6f7g8h9i0j2",
+//     "groupMsgId": "12345",
+//     "content": "Hello, group!",
+//     "contentType": "text",
+//     "status": "sent",
+//     "repliesTo": null,
+//     "isDeleted": false,
+//     "isDeletedAt": null,
+//     "createdAt": "2025-03-26T12:00:00.000Z",
+//     "updatedAt": "2025-03-26T12:00:00.000Z"
+//   }

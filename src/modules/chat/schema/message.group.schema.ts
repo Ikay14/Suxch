@@ -36,10 +36,10 @@ export const GroupMessageSchema = SchemaFactory.createForClass(GroupMessage);
 
 
 // {
-//     "groupId": "12345",
+//     "groupId": "12345" {note a reference to the group},
 //     "name": "Developers Group",
 //     "description": "A group for developers",
-//     "createdBy": "64f1a2b3c4d5e6f7g8h9i0j1",
+//     "createdBy": "64f1a2b3c4d5e6f7g8h9i0j1{ a user ref}",
 //     "avatar": "https://example.com/avatar.jpg",
 //     "fileUrl": "https://example.com/file.jpg",
 //     "members": [
@@ -63,16 +63,3 @@ export const GroupMessageSchema = SchemaFactory.createForClass(GroupMessage);
 //   }
 
 
-// {
-//     "group": "64f1a2b3c4d5e6f7g8h9i0j1",
-//     "sender": "64f1a2b3c4d5e6f7g8h9i0j2",
-//     "groupMsgId": "12345",
-//     "content": "Hello, group!",
-//     "contentType": "text",
-//     "status": "sent",
-//     "repliesTo": null,
-//     "isDeleted": false,
-//     "isDeletedAt": null,
-//     "createdAt": "2025-03-26T12:00:00.000Z",
-//     "updatedAt": "2025-03-26T12:00:00.000Z"
-//   }

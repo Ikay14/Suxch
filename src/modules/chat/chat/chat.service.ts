@@ -1,19 +1,23 @@
 import { BadRequestException, forwardRef, Inject, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { v4 as uuidv4 } from "uuid";
-import { Chat } from './schema/chat.schema';
+import { Chat } from '../schema/chat.schema';
 import { Model, Types } from 'mongoose';
 import { InjectRedis } from '@nestjs-modules/ioredis';
 import Redis from 'ioredis';
 
-import { CreateMsgDto } from './chat/dto/create.msg.dto';
-import { UpdateMsgDto } from './chat/dto/update.msg.dto';
-import { DeleteMsgDto } from './chat/dto/delete.msg.dto';
-import { ReadReceiptDto } from './chat/dto/read.msg.dto';
-import { User } from '../user/schema/user.schema';
-import { UploadMsgMediaDto } from './chat/dto/upload.media.dto';
+import { CreateMsgDto } from './dto/create.msg.dto';
+import { UpdateMsgDto } from './dto/update.msg.dto';
+import { DeleteMsgDto } from './dto/delete.msg.dto';
+import { ReadReceiptDto } from './dto/read.msg.dto';
+import { User } from '../../user/schema/user.schema';
+import { UploadMsgMediaDto } from './dto/upload.media.dto';
 import { CloudinaryService } from 'src/services/cloudinary.service';
 
+import { ChatGateway } from './chat.gateway';
+import { plainToClass } from 'class-transformer';
+import { MessageDto } from './response.dto/message.res.dto';
+import { populate } from 'dotenv';
 
 
 
@@ -27,7 +31,7 @@ export class ChatService {
         @InjectRedis() private redisClient: Redis,
         private cloudinaryService: CloudinaryService,
         
-    ){console.log('ChatService initialized');}
+    ){console.log('ChatService initialized');} 
 
     async createMessage(createMsg: CreateMsgDto) {
         

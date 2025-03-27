@@ -1,23 +1,23 @@
 import { ConnectedSocket, MessageBody, OnGatewayConnection, OnGatewayDisconnect, SubscribeMessage, WebSocketGateway, WebSocketServer } from "@nestjs/websockets";
 import { log } from "node:console";
 import { Server, Socket } from "socket.io";
-import { ChatService } from "src/modules/chat/chat.service";
+import { ChatService } from "src/modules/chat/chat/chat.service";
 import { CreateMsgDto } from "./dto/create.msg.dto";
 import { client } from "src/db/data.source";
-import { TypingDto } from "./dto/typing.msg.dto";
-import { StopTypingDto } from "./dto/stop.typing.dto";
-import { ReadReceiptDto } from "./dto/read.msg.dto";
+import { TypingDto } from "../chat/dto/typing.msg.dto";
+import { StopTypingDto } from "../chat/dto/stop.typing.dto";
+import { ReadReceiptDto } from "../chat/dto/read.msg.dto";
 import { InjectModel } from "@nestjs/mongoose";
-import { Chat } from "./schema/chat.schema";
+import { Chat } from "../schema/chat.schema";
 import { Model } from "mongoose";
-import { UploadMsgMediaDto } from "./dto/upload.media.dto";
-import { User } from "../user/schema/user.schema";
+import { UploadMsgMediaDto } from "../chat/dto/upload.media.dto";
+import { User } from "src/modules/user/schema/user.schema";
 import { forwardRef, Inject, UploadedFile, UseFilters, UseInterceptors } from "@nestjs/common";
 import { WsExceptionFilter } from "src/common/ws-exception.filter";
 import { SocketAck } from "src/common/decorator/socket-ack.decorator";
 import { FileInterceptor } from "@nestjs/platform-express";
 import { multerOptions } from "src/common/multer.storage";
-import { UpdateMsgDto } from "./dto/update.msg.dto";
+import { UpdateMsgDto } from "../chat/dto/update.msg.dto";
 
 @WebSocketGateway({ namespace: 'chat' })
 @UseFilters(new WsExceptionFilter())
