@@ -1,0 +1,188 @@
+asyncapi: '2.5.0'
+info:
+  title: Chat WebSocket API
+  version: '1.0.0'
+  description: WebSocket API for real-time chat communication
+servers:
+  production:
+    url: wss://your-api.com/chat
+    protocol: wss
+  development:
+    url: ws://localhost:3000/chat
+    protocol: ws
+tags:
+  - name: chat
+    description: Chat functionalities
+  - name: messages
+    description: Message handling
+  - name: notifications
+    description: Real-time notifications
+
+channels:
+  message:
+    description: Handles sending and receiving messages
+    subscribe:
+      operationId: handleMessage
+      summary: Receive a new message
+      message:
+        contentType: application/json
+        payload:
+          type: object
+          properties:
+            senderId: 
+              type: string
+            receiverId:
+              type: string
+            text:
+              type: string
+            timestamp:
+              type: string
+              format: date-time
+    publish:
+      operationId: sendMessage
+      summary: Send a new message
+      message:
+        contentType: application/json
+        payload:
+          $ref: '#/components/schemas/CreateMsgDto'
+
+  fileUpload:
+    description: Handles media file uploads
+    subscribe:
+      operationId: handleMediaUpload
+      summary: Receive file upload confirmation
+      message:
+        contentType: application/json
+        payload:
+          type: object
+          properties:
+            chatId:
+              type: string
+            fileUrl:
+              type: string
+    publish:
+      operationId: uploadFile
+      summary: Upload a media file
+      message:
+        contentType: multipart/form-data
+        payload:
+          $ref: '#/components/schemas/UploadMsgMediaDto'
+
+  deleteMessage:
+    description: Deletes a specific message
+    publish:
+      operationId: deleteMessage
+      summary: Request to delete a message
+      message:
+        contentType: application/json
+        payload:
+          type: object
+          properties:
+            messageId:
+              type: string
+
+  updateMessage:
+    description: Updates an existing message
+    publish:
+      operationId: updateMessage
+      summary: Request to update a message
+      message:
+        contentType: application/json
+        payload:
+          $ref: '#/components/schemas/UpdateMsgDto'
+
+  deleteChat:
+    description: Deletes an entire chat
+    publish:
+      operationId: deleteChat
+      summary: Request to delete a chat
+      message:
+        contentType: application/json
+        payload:
+          type: object
+          properties:
+            chatId:
+              type: string
+
+  read_receipt:
+    description: Handles message read receipts
+    publish:
+      operationId: handleReadReceipt
+      summary: Send read receipt for a message
+      message:
+        contentType: application/json
+        payload:
+          $ref: '#/components/schemas/ReadReceiptDto'
+
+  typing:
+    description: Handles typing indicators
+    publish:
+      operationId: handleTyping
+      summary: Notify when a user is typing
+      message:
+        contentType: application/json
+        payload:
+          $ref: '#/components/schemas/TypingDto'
+
+  stop_typing:
+    description: Handles stopping typing indicators
+    publish:
+      operationId: handleStopTyping
+      summary: Notify when a user stops typing
+      message:
+        contentType: application/json
+        payload:
+          $ref: '#/components/schemas/StopTypingDto'
+
+components:
+  schemas:
+    CreateMsgDto:
+      type: object
+      properties:
+        senderId:
+          type: string
+        receiverId:
+          type: string
+        text:
+          type: string
+        timestamp:
+          type: string
+          format: date-time
+    UploadMsgMediaDto:
+      type: object
+      properties:
+        chatId:
+          type: string
+        file:
+          type: string
+          format: binary
+    UpdateMsgDto:
+      type: object
+      properties:
+        messageId:
+          type: string
+        text:
+          type: string
+    ReadReceiptDto:
+      type: object
+      properties:
+        messageId:
+          type: string
+        receiverId:
+          type: string
+    TypingDto:
+      type: object
+      properties:
+        senderId:
+          type: string
+        receiverId:
+          type: string
+        chatId:
+          type: string
+    StopTypingDto:
+      type: object
+      properties:
+        senderId:
+          type: string
+        receiverId:
+          type: string

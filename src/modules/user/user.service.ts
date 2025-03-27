@@ -93,7 +93,7 @@ export class UserService {
         const { skip = 0, limit = 0 } = query;
         try {
           const data = await this.userModel
-            .find({ isDeleted: false })
+            .find({ isDeleted: { $ne: true } })
             .sort({ createdAt: -1 })
             .skip(skip)
             .limit(limit)

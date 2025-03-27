@@ -1,15 +1,15 @@
-import { Prop } from "@nestjs/mongoose";
+import { IsString } from "class-validator";
 
 export class CreateGroupDTo {
-    @Prop()
+   @IsString()
     name: string 
 
-    @Prop()
+    @IsString()
     description
 
-    @Prop()
+    @IsString()
     groupId: string 
 
-    @Prop()
+    @IsString()
     createdBy: string
 }

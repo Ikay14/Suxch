@@ -6,14 +6,14 @@ import { WsExceptionFilter } from "src/common/ws-exception.filter";
 import { Group } from "../schema/group.schema";
 import { Model } from "mongoose";
 import { GroupMessage } from "../schema/message.group.schema";
-import { GroupChatService } from "./group.service";
+import { GroupService } from "./group.service";
 
 @WebSocketGateway({ namespace : 'group_chat' })
 @UseFilters( new WsExceptionFilter())
 
 export class GroupChatGateWay implements OnGatewayConnection, OnGatewayDisconnect {
     constructor(
-        private groupChatService : GroupChatService,
+        private groupService : GroupService,
         @InjectModel(Group.name) private groupInfo: Model<Group>,
         @InjectModel(GroupMessage.name) private groupMsg: Model<GroupMessage>,
 

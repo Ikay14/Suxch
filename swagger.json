@@ -13,6 +13,87 @@
         "tags": [
           "App"
         ]
+      },
+      "post": {
+        "operationId": "GroupController_createGroup",
+        "parameters": [
+          {
+            "name": "userId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateGroupDTo"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Group created successfully"
+          },
+          "400": {
+            "description": "Bad request"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Create a new group",
+        "tags": [
+          "Groups"
+        ]
+      },
+      "delete": {
+        "operationId": "GroupController_deleteGroup",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "groupId": {
+                    "type": "string",
+                    "example": "abc123"
+                  },
+                  "userId": {
+                    "type": "string",
+                    "example": "user456"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Group deleted"
+          },
+          "404": {
+            "description": "Group not found"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Delete a group",
+        "tags": [
+          "Groups"
+        ]
       }
     },
     "/api/v1/auth/register": {
@@ -291,6 +372,423 @@
           "User"
         ]
       }
+    },
+    "/api/v1/{userId}": {
+      "patch": {
+        "operationId": "GroupController_updateGroupDetails",
+        "parameters": [
+          {
+            "name": "userId",
+            "required": true,
+            "in": "path",
+            "description": "ID of the user making the request",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateGroupDetailsDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Group updated successfully"
+          },
+          "403": {
+            "description": "Forbidden (not admin)"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Update group details",
+        "tags": [
+          "Groups"
+        ]
+      }
+    },
+    "/api/v1/add-member": {
+      "post": {
+        "operationId": "GroupController_addMember",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "groupId": {
+                    "type": "string",
+                    "example": "abc123",
+                    "description": "ID of the group"
+                  },
+                  "userId": {
+                    "type": "string",
+                    "example": "user456",
+                    "description": "ID of the user to be added"
+                  },
+                  "adminId": {
+                    "type": "string",
+                    "example": "admin789",
+                    "description": "ID of the admin performing the action"
+                  }
+                },
+                "required": [
+                  "groupId",
+                  "userId",
+                  "adminId"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Member added successfully"
+          },
+          "403": {
+            "description": "Unauthorized action"
+          },
+          "404": {
+            "description": "Group or user not found"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Add a member to a group",
+        "tags": [
+          "Groups"
+        ]
+      }
+    },
+    "/api/v1/remove-member": {
+      "patch": {
+        "operationId": "GroupController_removeMember",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "groupId": {
+                    "type": "string",
+                    "example": "abc123",
+                    "description": "ID of the group"
+                  },
+                  "userId": {
+                    "type": "string",
+                    "example": "user456",
+                    "description": "ID of the user to be removed"
+                  },
+                  "adminId": {
+                    "type": "string",
+                    "example": "admin789",
+                    "description": "ID of the admin performing the action"
+                  }
+                },
+                "required": [
+                  "groupId",
+                  "userId",
+                  "adminId"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Member removed successfully"
+          },
+          "403": {
+            "description": "Unauthorized action"
+          },
+          "404": {
+            "description": "Group or user not found"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Remove a member from a group",
+        "tags": [
+          "Groups"
+        ]
+      }
+    },
+    "/api/v1/{groupId}": {
+      "get": {
+        "operationId": "GroupController_getGroupById",
+        "parameters": [
+          {
+            "name": "groupId",
+            "required": true,
+            "in": "path",
+            "description": "ID of the group",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Group details"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get group by ID",
+        "tags": [
+          "Groups"
+        ]
+      }
+    },
+    "/api/v1/all": {
+      "get": {
+        "operationId": "GroupController_getAllGroups",
+        "parameters": [
+          {
+            "name": "limit",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "number"
+            }
+          },
+          {
+            "name": "page",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "List of groups"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get all groups (paginated)",
+        "tags": [
+          "Groups"
+        ]
+      }
+    },
+    "/api/v1/by-any/{key}/{value}": {
+      "get": {
+        "operationId": "GroupController_getGroupByAnyKey",
+        "parameters": [
+          {
+            "name": "value",
+            "required": true,
+            "in": "path",
+            "description": "Field value to match",
+            "schema": {}
+          },
+          {
+            "name": "key",
+            "required": true,
+            "in": "path",
+            "description": "Field name (e.g., \"name\")",
+            "schema": {}
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Filtered groups"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get groups by any field",
+        "tags": [
+          "Groups"
+        ]
+      }
+    },
+    "/api/v1/make-admin": {
+      "post": {
+        "operationId": "GroupController_makeAdmin",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "groupId": {
+                    "type": "string",
+                    "example": "abc123"
+                  },
+                  "userId": {
+                    "type": "string",
+                    "example": "user456"
+                  },
+                  "adminId": {
+                    "type": "string",
+                    "example": "admin789"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Member promoted"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Promote member to admin",
+        "tags": [
+          "Groups"
+        ]
+      }
+    },
+    "/api/v1/members/{groupId}": {
+      "get": {
+        "operationId": "GroupController_getMembers",
+        "parameters": [
+          {
+            "name": "groupId",
+            "required": true,
+            "in": "path",
+            "description": "ID of the group",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "limit",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "number"
+            }
+          },
+          {
+            "name": "skip",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "List of members"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get group members (paginated)",
+        "tags": [
+          "Groups"
+        ]
+      }
+    },
+    "/api/v1/admins/{groupId}": {
+      "get": {
+        "operationId": "GroupController_getAdmins",
+        "parameters": [
+          {
+            "name": "groupId",
+            "required": true,
+            "in": "path",
+            "description": "ID of the group",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "List of admins retrieved successfully"
+          },
+          "404": {
+            "description": "Group not found"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get all admins of a group",
+        "tags": [
+          "Groups"
+        ]
+      }
+    },
+    "/api/v1/group/{userId}": {
+      "get": {
+        "operationId": "GroupController_getGroupsByUserId",
+        "parameters": [
+          {
+            "name": "userId",
+            "required": true,
+            "in": "path",
+            "description": "ID of the user",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "List of groups retrieved successfully"
+          },
+          "404": {
+            "description": "User not found or no groups found"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get all groups a user belongs to",
+        "tags": [
+          "Groups"
+        ]
+      }
     }
   },
   "info": {
@@ -349,6 +847,14 @@
         ]
       },
       "VerifyOtpDto": {
+        "type": "object",
+        "properties": {}
+      },
+      "CreateGroupDTo": {
+        "type": "object",
+        "properties": {}
+      },
+      "UpdateGroupDetailsDto": {
         "type": "object",
         "properties": {}
       }

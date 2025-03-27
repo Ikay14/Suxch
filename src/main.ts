@@ -11,6 +11,9 @@ import * as cors from 'cors';
 import * as cookieParser from 'cookie-parser';
 import { client, initializeDatabase } from './db/data.source';
 import { ConfigService } from '@nestjs/config';
+import { Parser } from '@asyncapi/parser';
+
+
 
 
 async function bootstrap() {
@@ -53,9 +56,15 @@ async function bootstrap() {
    const config = new DocumentBuilder()
    .setTitle('Suxch API')
    .setDescription('The API documentation')
-   .setVersion('1.0')  
+   .setVersion('1.0')   
    .addBearerAuth()
    .build();    
+
+  const asyncapiDocument = fs.readFileSync('./asyncapi.yaml', 'utf8');
+  const parser = new Parser();
+  parser.parse(asyncapiDocument)
+    .then((doc) => console.log('Valid AsyncAPI document:'))
+    .catch((err) => console.error('Invalid AsyncAPI document:', err));
 
   const document = SwaggerModule.createDocument(app, config);
   SwaggerModule.setup('api/docs', app, document);

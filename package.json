@@ -20,6 +20,9 @@
     "test:e2e": "jest --config ./test/jest-e2e.json"
   },
   "dependencies": {
+    "@asyncapi/generator": "^2.6.0",
+    "@asyncapi/html-template": "^3.2.0",
+    "@asyncapi/parser": "^3.4.0",
     "@nestjs-modules/ioredis": "^2.0.2",
     "@nestjs/common": "^10.0.0",
     "@nestjs/config": "^4.0.1",
