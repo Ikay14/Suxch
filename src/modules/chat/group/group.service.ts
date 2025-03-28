@@ -205,6 +205,17 @@ export class GroupService {
 
     async getAllMembers(groupId: string, skip: number, limit: number) {
         try {
+
+        //create redis key 
+        const memKey = `members:${groupId}` 
+
+        // Query from the cached memory
+        const cachedMem = await this.redisClient.get(memKey)
+        if(cachedMem) 
+            return {
+                msg: 'Members returned successfully',
+                data: JSON.parse(cachedMem),
+        }
         // Find the group by groupId
         const group = await this.groupInfo.findOne({ groupId })
         .skip(skip)
@@ -212,6 +223,13 @@ export class GroupService {
         .exec()
         if (!group) throw new NotFoundException('Group not found');
         
+        // Cache the result in Redis
+        await this.redisClient.set(memKey,
+            JSON.stringify(group.members),
+            'EX',
+            3600
+        )
+
         return {
             msg: 'Success',
             data: group.members
@@ -226,9 +244,26 @@ export class GroupService {
     //   Get all groups a user belongs to
 async getAllGroupsByUser(userId: string) {
     try {
+
+        // create key for caching
+        const userGroupKey = `userGroups${userId}`
+
+        // query the cache memory
+        const cachedGroups = await this.redisClient.get(userGroupKey)
+        if (cachedGroups)
+            return {
+                    msg: 'user groups retrieved successfully',
+                    data: JSON.parse(cachedGroups)   
+         }
         const groups = await this.groupInfo.find({ 'members.userId': userId });
         if (!groups.length) throw new NotFoundException('User is not a member of any group');
         
+        await this.redisClient.set(
+            userGroupKey,
+            JSON.stringify(groups),
+            'EX',
+            3600
+        )
         return {
             msg: 'Success',
             data: groups
@@ -244,9 +279,27 @@ async getAllGroupsByUser(userId: string) {
 //  get all admin in a group 
 async getAllAdmins(groupId: string) {
     try {
+        // create key f
+        const adminKey = `groupAdmins:${groupId}`
+
+        const cachedData = await this.redisClient.get(adminKey)
+        if(cachedData)
+            return {
+                msg: 'data retrieved',
+                data: JSON.parse(cachedData)
+            }
+
     // Find the group by groupId
     const group = await this.groupInfo.findOne({ groupId });
     if (!group) throw new NotFoundException('Group not found');
+
+
+    await this.redisClient.set(
+        adminKey,
+        JSON.stringify(group),
+        'EX',
+        3600
+    )
 
     const admins = group.members.filter((member) => member.role === Role.ADMIN);
     return {
@@ -342,7 +395,16 @@ async getAllAdmins(groupId: string) {
     }
 
    async getAllGroups(query: any, ):Promise<{ msg: string, data: Group[]}>{
-        
+
+    const groupsKey = `allGroups:${uuidv4}`
+
+    const cachedData = await this.redisClient.get(groupsKey)
+    if(cachedData)
+        return {
+            msg: 'data retrieved from cache memory',
+            data: JSON.parse(cachedData)
+        }
+
         const {skip = 0, limit = 0} = query
         try {
             const data = await this.groupInfo
@@ -352,6 +414,10 @@ async getAllAdmins(groupId: string) {
             .lean()
             .exec()
             if(!data.length) throw new NotFoundException()
+
+        await this.redisClient.set(
+            groupsKey, JSON.stringify(data), "EX", 3600
+        )        
                 
             return {
                 msg: 'Success',

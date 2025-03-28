@@ -8,16 +8,13 @@ import Redis from 'ioredis';
 
 import { CreateMsgDto } from './dto/create.msg.dto';
 import { UpdateMsgDto } from './dto/update.msg.dto';
-import { DeleteMsgDto } from './dto/delete.msg.dto';
-import { ReadReceiptDto } from './dto/read.msg.dto';
+import {fileTypeFromBuffer} from 'file-type'
 import { User } from '../../user/schema/user.schema';
 import { UploadMsgMediaDto } from './dto/upload.media.dto';
 import { CloudinaryService } from 'src/services/cloudinary.service';
+import { Readable } from 'stream';
 
-import { ChatGateway } from './chat.gateway';
-import { plainToClass } from 'class-transformer';
-import { MessageDto } from './response.dto/message.res.dto';
-import { populate } from 'dotenv';
+
 
 
 
@@ -62,35 +59,62 @@ export class ChatService {
         }; 
     }
 
-    async uploadFile(uploadMsgMediaDto: UploadMsgMediaDto, file: Express.Request['file']) {
-        const { senderId, receiverId, contentType } = uploadMsgMediaDto;
+    async uploadFile(uploadMsgMediaDto: UploadMsgMediaDto, file: Express.Request['file'] | Buffer) {
+        const { senderId, receiverId } = uploadMsgMediaDto;
+    
         try {
-            const msgId = uuidv4();
-
-            if (!senderId || !receiverId) 
+            if (!senderId || !receiverId) {
                 throw new BadRequestException('Sender and receiver must be provided');
-
+            }
+    
+            const msgId = uuidv4();
             const folder = `chat-files/${senderId}:${receiverId}`;
-
-            const content = file.mimetype.startsWith('image/')
-                ? 'image'
-                : file.mimetype.startsWith('audio/')
-                ? 'video'
-                : 'raw';
-
-            const fileUrl = await this.cloudinaryService.uploadFile(file, folder, content);
-
+    
+            // Handle both Buffer and Multer file cases
+            let buffer: Buffer;
+            let mimeType: string;
+            let originalName: string;
+    
+            if (file instanceof Buffer) {
+                buffer = file;
+                const typeResult = await fileTypeFromBuffer(buffer);
+                mimeType = typeResult?.mime || 'application/octet-stream';
+                originalName = `file-${msgId}`;  
+            } else {
+                buffer = Buffer.from(file.buffer);
+                if ('mimetype' in file) {
+                    mimeType = file.mimetype;
+                } else {
+                    throw new BadRequestException('Invalid file type');
+                }
+                originalName = 'originalname' in file ? file.originalname : `file-${msgId}`;
+            }
+    
+            // Upload to Cloudinary with proper type detection
+            const fileUrl = await this.cloudinaryService.uploadFile({  
+                buffer,
+                originalname: originalName,
+                mimetype: mimeType,
+                fieldname: '',
+                encoding: '',
+                size: 0,
+                stream: new Readable,
+                destination: '',
+                filename: '',
+                path: ''
+            }, folder);
+    
             const chatRoom = await this.createChatRoom(senderId, receiverId);
-
+    
             const newMsg = await this.chatModel.create({ 
                 senderId,
                 receiverId,
                 chatId: chatRoom,
                 messageId: msgId,
-                messageType: content,
-                fileUrl
+                fileUrl,
+                fileType: mimeType
             });
-
+    
             return {
                 msg: 'Chat media uploaded successfully',
                 newMsg
@@ -100,6 +124,7 @@ export class ChatService {
             throw new BadRequestException(error.message || 'Error uploading media');
         }
     }
+
 
     async getChatById(chatId: string) {
         const chatKey = `messageKey:${chatId}`;
@@ -132,7 +157,6 @@ export class ChatService {
         // Cache the result in Redis
         await this.redisClient.set(chatKey, JSON.stringify(chat), 'EX', 3600);
 
-       console.log('retrieved chats', chat);
       
         return {
           msg: 'Messages retrieved successfully',

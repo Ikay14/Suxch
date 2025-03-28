@@ -78,8 +78,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
         @SocketAck() ack: (response: { status: string; message?: string; data?: any }) => void,
       ) {
         try {
-          console.log('Received file:', file);
-      
+        
           // Upload the file to Cloudinary
           const fileUrl = await this.chatService.uploadFile(uploadMsgMediaDto, file);
       
