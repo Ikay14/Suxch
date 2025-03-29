@@ -7,11 +7,11 @@ import { ApiTags, ApiOperation, ApiResponse, ApiParam, ApiBody, ApiQuery, ApiBea
 
 @ApiTags('Groups')  
 @ApiBearerAuth()    
-@Controller()
+@Controller('group')
 export class GroupController {
     constructor( private groupService: GroupService){}
 
-    @Post()
+    @Post(':userId')
     @ApiOperation({ summary: 'Create a new group' })
     @ApiBody({ type: CreateGroupDTo })
     @ApiResponse({ status: 201, description: 'Group created successfully' })
@@ -35,7 +35,7 @@ export class GroupController {
     ) {
       return this.groupService.updateGroup(updateGroupDetailsDto, userId);
     }
-  
+   
     @Delete()
     @ApiOperation({ summary: 'Delete a group' })
     @ApiBody({ 

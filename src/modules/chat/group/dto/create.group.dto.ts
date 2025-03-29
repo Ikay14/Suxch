@@ -7,9 +7,6 @@ export class CreateGroupDTo {
     @IsString()
     description
 
-    @IsString()
     groupId: string 
+}  
 
-    @IsString()
-    createdBy: string
-}

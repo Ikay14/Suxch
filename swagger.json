@@ -13,87 +13,6 @@
         "tags": [
           "App"
         ]
-      },
-      "post": {
-        "operationId": "GroupController_createGroup",
-        "parameters": [
-          {
-            "name": "userId",
-            "required": true,
-            "in": "path",
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/CreateGroupDTo"
-              }
-            }
-          }
-        },
-        "responses": {
-          "201": {
-            "description": "Group created successfully"
-          },
-          "400": {
-            "description": "Bad request"
-          }
-        },
-        "security": [
-          {
-            "bearer": []
-          }
-        ],
-        "summary": "Create a new group",
-        "tags": [
-          "Groups"
-        ]
-      },
-      "delete": {
-        "operationId": "GroupController_deleteGroup",
-        "parameters": [],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "type": "object",
-                "properties": {
-                  "groupId": {
-                    "type": "string",
-                    "example": "abc123"
-                  },
-                  "userId": {
-                    "type": "string",
-                    "example": "user456"
-                  }
-                }
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "Group deleted"
-          },
-          "404": {
-            "description": "Group not found"
-          }
-        },
-        "security": [
-          {
-            "bearer": []
-          }
-        ],
-        "summary": "Delete a group",
-        "tags": [
-          "Groups"
-        ]
       }
     },
     "/api/v1/auth/register": {
@@ -373,7 +292,47 @@
         ]
       }
     },
-    "/api/v1/{userId}": {
+    "/api/v1/group/{userId}": {
+      "post": {
+        "operationId": "GroupController_createGroup",
+        "parameters": [
+          {
+            "name": "userId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateGroupDTo"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Group created successfully"
+          },
+          "400": {
+            "description": "Bad request"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Create a new group",
+        "tags": [
+          "Groups"
+        ]
+      },
       "patch": {
         "operationId": "GroupController_updateGroupDetails",
         "parameters": [
@@ -416,7 +375,50 @@
         ]
       }
     },
-    "/api/v1/add-member": {
+    "/api/v1/group": {
+      "delete": {
+        "operationId": "GroupController_deleteGroup",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "groupId": {
+                    "type": "string",
+                    "example": "abc123"
+                  },
+                  "userId": {
+                    "type": "string",
+                    "example": "user456"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Group deleted"
+          },
+          "404": {
+            "description": "Group not found"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Delete a group",
+        "tags": [
+          "Groups"
+        ]
+      }
+    },
+    "/api/v1/group/add-member": {
       "post": {
         "operationId": "GroupController_addMember",
         "parameters": [],
@@ -474,7 +476,7 @@
         ]
       }
     },
-    "/api/v1/remove-member": {
+    "/api/v1/group/remove-member": {
       "patch": {
         "operationId": "GroupController_removeMember",
         "parameters": [],
@@ -532,7 +534,7 @@
         ]
       }
     },
-    "/api/v1/{groupId}": {
+    "/api/v1/group/{groupId}": {
       "get": {
         "operationId": "GroupController_getGroupById",
         "parameters": [
@@ -562,7 +564,7 @@
         ]
       }
     },
-    "/api/v1/all": {
+    "/api/v1/group/all": {
       "get": {
         "operationId": "GroupController_getAllGroups",
         "parameters": [
@@ -599,7 +601,7 @@
         ]
       }
     },
-    "/api/v1/by-any/{key}/{value}": {
+    "/api/v1/group/by-any/{key}/{value}": {
       "get": {
         "operationId": "GroupController_getGroupByAnyKey",
         "parameters": [
@@ -634,7 +636,7 @@
         ]
       }
     },
-    "/api/v1/make-admin": {
+    "/api/v1/group/make-admin": {
       "post": {
         "operationId": "GroupController_makeAdmin",
         "parameters": [],
@@ -678,7 +680,7 @@
         ]
       }
     },
-    "/api/v1/members/{groupId}": {
+    "/api/v1/group/members/{groupId}": {
       "get": {
         "operationId": "GroupController_getMembers",
         "parameters": [
@@ -724,7 +726,7 @@
         ]
       }
     },
-    "/api/v1/admins/{groupId}": {
+    "/api/v1/group/admins/{groupId}": {
       "get": {
         "operationId": "GroupController_getAdmins",
         "parameters": [
@@ -757,7 +759,7 @@
         ]
       }
     },
-    "/api/v1/group/{userId}": {
+    "/api/v1/group/group/{userId}": {
       "get": {
         "operationId": "GroupController_getGroupsByUserId",
         "parameters": [

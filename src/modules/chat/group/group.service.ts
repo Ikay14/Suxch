@@ -327,7 +327,7 @@ async getAllAdmins(groupId: string) {
         )
         if(!group) throw new NotFoundException('Group not found')   
         
-        const isCreator = group.createdBy === userId
+        const isCreator = await this.groupInfo.findOne({ createdBy: userId })
         if(!isCreator) throw new Error('You are not authorized to update this group')
 
         return {
@@ -340,7 +340,7 @@ async getAllAdmins(groupId: string) {
             throw new Error('Error updating Group')
         }
         
-    }
+    } 
 
     async deleteGroup(payload: { groupId: string, userId: string }){
             try {
