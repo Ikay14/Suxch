@@ -1,0 +1,103 @@
+:root {
+    --primary-color: #083b20; /* App's primary color */
+    --primary-hover-color: #065a1e; /* App's primary hover color */
+    --secondary-color: #f5f5f5; /* App's secondary background color */
+    --error-color: #ff3333; /* Error message color */
+    --text-color: #333; /* General text color */
+    --input-border-color: #ddd; /* Input border color */
+    --input-focus-color: #083b20; /* Input focus border color */
+}
+
+.register-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh; /* Full viewport height */
+    background-color: var(--secondary-color);
+    padding: 20px;
+    margin: 0; /* Remove any default margin */
+}
+
+.register-form {
+    background: white;
+    padding: 2rem;
+    border-radius: 8px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    width: 100%;
+    max-width: 400px;
+}
+
+.register-title {
+    text-align: center;
+    margin-bottom: 1.5rem;
+    color: var(--text-color);
+}
+
+.form-group {
+    margin-bottom: 1rem;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 0.5rem;
+    font-weight: 500;
+    color: var(--text-color);
+}
+
+.form-group input {
+    width: 100%;
+    padding: 0.75rem;
+    border: 1px solid var(--input-border-color);
+    border-radius: 4px;
+    font-size: 1rem;
+    transition: border-color 0.3s;
+}
+
+.form-group input:focus {
+    border-color: var(--input-focus-color);
+    outline: none;
+}
+
+.register-button {
+    width: 100%;
+    padding: 0.75rem;
+    background-color: var(--primary-color);
+    color: white;
+    border: none;
+    border-radius: 4px;
+    font-size: 1rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background-color 0.3s;
+    margin-top: 1rem;
+}
+
+.register-button:hover {
+    background-color: var(--primary-hover-color);
+}
+
+.register-button:disabled {
+    background-color: #cccccc;
+    cursor: not-allowed;
+}
+
+.error-message {
+    color: var(--error-color);
+    margin-bottom: 1rem;
+    text-align: center;
+}
+
+.login-link {
+    text-align: center;
+    margin-top: 1rem;
+    color: #666;
+}
+
+.login-link a {
+    color: var(--primary-color);
+    text-decoration: none;
+}
+
+.login-link a:hover {
+    text-decoration: underline;
+}

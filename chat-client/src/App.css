@@ -1,0 +1,16 @@
+.app {
+    font-family: Arial, sans-serif;
+    background-color: #f0f8ff;
+    color: #333;
+    padding: 20px;
+}
+
+.app-title {
+    text-align: center;
+    color: #0078d7;
+    margin-bottom: 20px;
+}
+
+.main-layout {
+    display: flex;
+}
